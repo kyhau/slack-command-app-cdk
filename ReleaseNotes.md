@@ -6,3 +6,4 @@ Initial version
     2. A Lambda Function [ImmediateResponse.py](lambda/ImmediateResponse.py) to perform authentication, some basic checks and send an intermediate response to Slack within 3 seconds (Slack requirement).
     3. A Lambda Function [AsyncWorker.py](lambda/AsyncWorker.py) to perform actual operation which may take more than 3 seconds to finish.
     4. A Lambda Function [SyncWorker.py](lambda/SyncWorker.py) to perform actual operation which will be finished in less than 3 seconds.
+2. Added steps to test the Lambda code locally with sam-beta-cdk.

@@ -1,0 +1,2 @@
+# Requried by `sam-beta-cdk build` TODO check if this is a sam-beta-cdk bug
+

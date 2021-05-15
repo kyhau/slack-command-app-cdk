@@ -11,6 +11,8 @@ CHILD_ASYNC_FUNCTION_NAME = os.environ.get("AsyncWorkerLambdaFunctionName", "Asy
 CHILD_SYNC_FUNCTION_NAME = os.environ.get("SyncWorkerLambdaFunctionName", "SyncWorker")
 PARAMETER_KEY = os.environ.get("SlackAppTokenParameterKey")
 SLACK_COMMAND = os.environ.get("SlackCommand", "/testcdk")
+IS_AWS_SAM_LOCAL = os.environ.get("AWS_SAM_LOCAL") == "true"
+SLACK_TOKEN = boto3.client("ssm").get_parameter(Name=PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
 lambda_client = boto3.client("lambda")
 
 
@@ -43,8 +45,10 @@ def lambda_handler(event, context):
     params = parse_qs(event["body"])
     user_id = params["user_id"][0]
 
+    # Authentication and authorization
+    # Note that you may also compare api_app_id, team_domain, channel_id, channel_name etc.
     token = params["token"][0]
-    if token != boto3.client("ssm").get_parameter(Name=PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]:
+    if token != SLACK_TOKEN and IS_AWS_SAM_LOCAL is False:
         logging.error(f"Request token ({token}) does not match expected.")
         return respond(f"@<{user_id}> Invalid request token. Please contact your admin.")
 

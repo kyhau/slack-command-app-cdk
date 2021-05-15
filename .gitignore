@@ -3,7 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# CDK
+# CDK / SAM
+.aws-sam
 cdk.out
 
 # C extensions

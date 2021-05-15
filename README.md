@@ -1,6 +1,9 @@
 # slack-command-app-cdk
 
-This repo provides the source code for building a Slack App/Bot with AWS API Gateway and Lambda Functions, deploying with CDK v2 and testing wth SAM CLI (sam-beta-cdk).
+[![githubactions](https://github.com/kyhau/slack-command-app-cdk/workflows/Build-Test/badge.svg)](https://github.com/kyhau/slack-command-app-cdk/actions)
+[![travisci](https://travis-ci.org/kyhau/slack-command-app-cdk.svg?branch=master)](https://travis-ci.org/kyhau/slack-command-app-cdk)
+
+This repo provides the source code for building a Slack App/Bot with AWS API Gateway and Lambda Functions, deploying with [CDK v2](https://docs.aws.amazon.com/cdk/latest/guide/work-with-cdk-v2.html) and testing wth SAM CLI ([sam-beta-cdk](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-getting-started.html)).
 This SlackApp can handle requests triggered from a [Slash Command](https://api.slack.com/interactivity/slash-commands) which will take longer than [3 seconds](https://api.slack.com/events-api) to process, and posts the details back to the user.
 
 ### Overview
@@ -34,14 +37,35 @@ Prerequisites
 
 # Install requirements
 pip install -e .
+
+# First time
+cdk bootstrap
+# Or
+cdk ls
+
+cdk synth
 ```
 ### Test Lambda function locally with AWS SAM CLI and AWS CDK
 Prerequisites:
-1. Install sam-beta-cdk
-1. Start Docker
+1. Install [sam-beta-cdk](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-getting-started.html)
+2. Start Docker
+
 ```bash
-TODO
+# Prepare the deployment artifacts
+sam-beta-cdk build
+
+# Invoke the function STACK_NAME/FUNCTION_IDENTIFIER
+sam-beta-cdk local invoke K-CDK-SlackApp/K-CDK-SlackApp-ImmediateResponse -e tests/event_async.json
+sam-beta-cdk local invoke K-CDK-SlackApp/K-CDK-SlackApp-ImmediateResponse -e tests/event_sync.json
+
+# To start the API declared in the AWS CDK application
+sam-beta-cdk local start-api
+
+# To start a local endpoint that emulates AWS Lambda
+sam-beta-cdk local start-lambda
 ```
+
+For details of sam-beta-cdk, see https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-testing.html.
 
 ### Deploy
 
@@ -51,9 +75,21 @@ cdk deploy
 rm -rf cdk.out package */__pycache__ */*.egg-info */out.json
 ```
 
-### Try it on Slack
+## Try it on Slack
 
 E.g. if command is `/testcdk`, then
 
 1. Run `/testcdk async`
 1. Run `/testcdk sync`
+
+## Notes on known sam-beta-cdk issues
+
+1. KeyError when running `sam-beta-cdk ...`
+   ```bash
+   KeyError: '/home/.../lambda'
+   Failed to execute script __main__
+   ```
+   - Known bug: https://github.com/aws/aws-sam-cli/issues/2849
+   - Workaround:
+       - Add `"@aws-cdk/core:newStyleStackSynthesis": false` into cdk.json
+       - Add an empty requirements.txt to [lambda/](lambda/).
