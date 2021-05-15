@@ -1,1 +1,59 @@
 # slack-command-app-cdk
+
+This repo provides the source code for building a Slack App/Bot with AWS API Gateway and Lambda Functions, deploying with CDK v2 and testing wth SAM CLI (sam-beta-cdk).
+This SlackApp can handle requests triggered from a [Slash Command](https://api.slack.com/interactivity/slash-commands) which will take longer than [3 seconds](https://api.slack.com/events-api) to process, and posts the details back to the user.
+
+### Overview
+
+![Architecture](doc/SlackApp-ArchitectureOverview.png)
+
+1. An API Gateway to provide an endpoint to be invoked from a Slack Command.
+2. A Lambda Function [lambda/ImmediateResponse.py](lambda/ImmediateResponse.py) to perform authentication, some basic checks and send an intermediate response to Slack within 3 seconds (Slack requirement). This function invokes another Lambda function to to the request tasks (synchronously invocation for quick task; asynchronous invocation for long tasks).
+3. A Lambda Function [lambda/AsyncWorker.py](lambda/AsyncWorker.py) to perform actual operation that may take more than 3 seconds to finish.
+4. A Lambda Function [lambda/SyncWorker.py](lambda/SyncWorker.py) to perform actual operation that takes less than 3 seconds to finish.
+6. CloudWatch Loggroup for API Gateway and Lambda Functions.
+
+## Setup on Slack
+
+To create a **Slack Command** in Slack (the default command in this repo is **`/lookup`**)
+1. Navigate to https://api.slack.com/apps.
+2. Select **Create New App** and select **Slash Commands**.
+3. Enter the name **`/testcdk`** for the command and click **Add Slash Command Integration**.
+4. Enter the provided API endpoint URL in the URL field.
+5. Copy the **Verification Token** from **Basic Information**.
+
+## Build, Test and Deploy
+
+Prerequisites
+1. Install CDK v2: `npm install -g aws-cdk@next`
+2. Update env_dev.json
+3. Store your Slack token (from step (5) above) in the Parameter Store with [scripts/create_ssm_parameter.py](scripts/create_ssm_parameter.py).
+
+```bash
+# Create and activate virtual env (optional)
+
+# Install requirements
+pip install -e .
+```
+### Test Lambda function locally with AWS SAM CLI and AWS CDK
+Prerequisites:
+1. Install sam-beta-cdk
+1. Start Docker
+```bash
+TODO
+```
+
+### Deploy
+
+```bash
+cdk deploy
+
+rm -rf cdk.out package */__pycache__ */*.egg-info */out.json
+```
+
+### Try it on Slack
+
+E.g. if command is `/testcdk`, then
+
+1. Run `/testcdk async`
+1. Run `/testcdk sync`
