@@ -18,7 +18,7 @@ This SlackApp can handle requests triggered from a [Slash Command](https://api.s
 
 ## Setup on Slack
 
-To create a **Slack Command** in Slack (the default command in this repo is **`/lookup`**)
+To create a **Slack Command** in Slack (the default command in this repo is **`/testcdk`**)
 1. Navigate to https://api.slack.com/apps.
 2. Select **Create New App** and select **Slash Commands**.
 3. Enter the name **`/testcdk`** for the command and click **Add Slash Command Integration**.
