@@ -1,3 +1,9 @@
+0.2.0 - 2021-06-05
+==================
+Support OAuth 2.0. For details of Slack OAuth 2.0 v2 see
+- https://api.slack.com/authentication/oauth-v2
+- https://api.slack.com/methods/oauth.v2.access
+
 0.1.0 - 2021-05-15
 ==================
 Initial version

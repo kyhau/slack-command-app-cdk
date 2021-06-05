@@ -30,7 +30,7 @@ To create a **Slack Command** in Slack (the default command in this repo is **`/
 Prerequisites
 1. Install CDK v2: `npm install -g aws-cdk@next`
 2. Update env_dev.json
-3. Store your Slack token (from step (5) above) in the Parameter Store with [scripts/create_ssm_parameter.py](scripts/create_ssm_parameter.py).
+3. Store your Slack token (from step (5) above) in the Parameter Store with [scripts/create_ssm_parameters.py](scripts/create_ssm_parameters.py).
 
 ```bash
 # Create and activate virtual env (optional)
@@ -70,7 +70,10 @@ For details of sam-beta-cdk, see https://docs.aws.amazon.com/serverless-applicat
 ### Deploy
 
 ```bash
-cdk deploy
+cdk deploy K-CDK-SlackApp
+
+# If need to share the app with other Workspace, deploy also
+cdk deploy K-CDK-SlackApp-OAuth
 
 rm -rf cdk.out package */__pycache__ */*.egg-info */out.json
 ```
