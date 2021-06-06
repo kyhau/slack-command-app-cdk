@@ -56,12 +56,13 @@ class SlackAppConstructsStack(Stack):
         new_deployment = apigw_.Deployment(self, f"{id}-API-Deployment", api=api)
         apigw_.Stage(
             self, f"{id}-API-Stage",
+            data_trace_enabled=False,
             description=f"{stage} environment",
             deployment=new_deployment,
             logging_level=apigw_.MethodLoggingLevel.ERROR,
             metrics_enabled=True,
             stage_name=stage,
-            tracing_enabled=True,
+            tracing_enabled=False,
         )
 
     def create_lambda(self, function_name: str, custom_role: iam_.Role) -> lambda_.Function:
