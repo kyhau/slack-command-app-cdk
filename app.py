@@ -13,7 +13,11 @@ env_file = os.environ.get("ENV_FILE", "env_dev.json")
 with open(env_file) as json_file:
     stage_env = json.load(json_file)
 
+settings_file = os.environ.get("SETTINGS_FILE", "settings_dev.json")
+with open(settings_file) as json_file:
+    stage_settings = json.load(json_file)
+
 app = App()
-SlackAppConstructsStack(app, "K-CDK-SlackApp", env=Environment(**stage_env))
-SlackAppOAuthConstructsStack(app, "K-CDK-SlackApp-OAuth", env=Environment(**stage_env))
+SlackAppConstructsStack(app, "K-CDK-SlackApp", stage_settings, env=Environment(**stage_env))
+SlackAppOAuthConstructsStack(app, "K-CDK-SlackApp-OAuth", stage_settings, env=Environment(**stage_env))
 app.synth()

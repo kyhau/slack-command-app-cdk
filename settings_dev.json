@@ -1,0 +1,8 @@
+{
+  "TODO_TEAM_NAME": {
+    "team_id": "TODO_TEAM_ID",
+    "channels": {
+      "TODO_CHANNEL_ID": "TODO_CHANNEL_NAME"
+    }
+  }
+}

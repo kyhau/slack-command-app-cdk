@@ -10,9 +10,19 @@ lambda_dir = "lambda"
 CLIENT_ID_PARAMETER_NAME = "/apps/slack_app/k_cdk/client_id"
 CLIENT_SECRET_PARAMETER_NAME = "/apps/slack_app/k_cdk/client_secret"
 
+get_team_ids = lambda settings: [v["team_id"] for v in settings.values() if v.get("team_id")]
+
+
+def get_channel_ids(settings):
+    ret = []
+    for v in settings.values():
+        if v.get("channels"):
+            ret.extend(v["channels"].keys())
+    return ret
+
 
 class SlackAppOAuthConstructsStack(Stack):
-    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, settings, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
         self.id = id
 
@@ -35,6 +45,8 @@ class SlackAppOAuthConstructsStack(Stack):
         func_oauth.add_environment("SlackAppClientIdParameterKey", CLIENT_ID_PARAMETER_NAME)
         func_oauth.add_environment("SlackAppClientSecretParameterKey", CLIENT_SECRET_PARAMETER_NAME)
         func_oauth.add_environment("SlackAppOAuthDynamoDBTable", table_name)
+        func_oauth.add_environment("SlackChannelIds", ",".join(get_channel_ids(settings)))
+        func_oauth.add_environment("SlackTeamIds", ",".join(get_team_ids(settings)))
 
         api = apigw_.LambdaRestApi(
             self, f"{id}-API",

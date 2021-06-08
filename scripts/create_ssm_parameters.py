@@ -2,9 +2,9 @@ import boto3
 
 AWS_REGION = "ap-southeast-2"
 DATA = {
-    "token": None,  # slack verification token
-    "client_id": None,  # optional: for app sharing with oauth 2.0
-    "client_secret": None,  # optional: for app sharing with oauth 2.0
+    "token": None,  # TODO: slack verification token
+    "client_id": None,  # optional: required for deploying K-CDK-SlackApp-OAuth for app sharing with oauth 2.0
+    "client_secret": None,  # optional: required for deploying K-CDK-SlackApp-OAuth for app sharing with oauth 2.0
 }
 PARAMETER_KEY_PREFIX = "/apps/slack_app/k_cdk"
 SLACK_APP_NAME = "K-CDK-SlackApp"

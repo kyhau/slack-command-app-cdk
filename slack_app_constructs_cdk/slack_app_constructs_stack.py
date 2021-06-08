@@ -9,9 +9,20 @@ lambda_dir = "lambda"
 PARAMETER_NAME = "/apps/slack_app/k_cdk/token"
 SLACK_COMMAND = "/testcdk"
 
+get_team_domains = lambda settings: list(settings.keys())
+get_team_ids = lambda settings: [v["team_id"] for v in settings.values() if v.get("team_id")]
+
+
+def get_channel_ids(settings):
+    ret = []
+    for v in settings.values():
+        if v.get("channels"):
+            ret.extend(v["channels"].keys())
+    return ret
+
 
 class SlackAppConstructsStack(Stack):
-    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, settings, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
         self.id = id
 
@@ -36,6 +47,10 @@ class SlackAppConstructsStack(Stack):
         func_immediate_response.add_environment("SlackCommand", SLACK_COMMAND)
         func_immediate_response.add_environment("AsyncWorkerLambdaFunctionName", f"{id}-AsyncWorker")
         func_immediate_response.add_environment("SyncWorkerLambdaFunctionName", f"{id}-SyncWorker")
+        func_immediate_response.add_environment("SlackChannelIds", ",".join(get_channel_ids(settings)))
+        func_immediate_response.add_environment("SlackDomains", ",".join(get_team_domains(settings)))
+        func_immediate_response.add_environment("SlackTeamIds", ",".join(get_team_ids(settings)))
+
 
         api = apigw_.LambdaRestApi(
             self, f"{id}-API",

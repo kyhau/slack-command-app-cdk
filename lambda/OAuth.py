@@ -22,6 +22,8 @@ logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
 CLIENT_ID_PARAMETER_KEY = os.environ.get("SlackAppClientIdParameterKey")
 CLIENT_SECRET_PARAMETER_KEY = os.environ.get("SlackAppClientSecretParameterKey")
 DDB_TABLE_NAME = os.environ.get("SlackAppOAuthDynamoDBTable")
+CHANNEL_IDS = list(map(str.strip, os.environ.get("SlackChannelIds", "").split(",")))
+TEAM_IDS = list(map(str.strip, os.environ.get("SlackTeamIds", "").split(",")))
 
 ssm_client = boto3.client("ssm")
 CLIENT_ID = ssm_client.get_parameter(Name=CLIENT_ID_PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
@@ -33,9 +35,24 @@ table = boto3.resource("dynamodb").Table(DDB_TABLE_NAME)
 http = urllib3.PoolManager()
 
 
+def authorize(response_data):
+    """Check if app is invoked from the expected domain channel"""
+    try:
+        team_id = response_data["team"]["id"]
+        channel_id = response_data["incoming_webhook"]["channel_id"]
+
+        if team_id in TEAM_IDS and channel_id in CHANNEL_IDS:
+            return True
+
+    except Exception as e:
+        logging.error(f"Failed to do authorization check: {e}")
+
+    return False
+
+
 def put_data_to_dynamodb(response_data):
     try:
-        data = {"request_utc": datetime.utcnow().isoformat()}
+        data = {"request_utc": datetime.utcnow().isoformat()}  # Add current timestamp
         for k, v in response_data.items():
             if isinstance(v, dict):
                 for k2, v2 in v.items():
@@ -73,15 +90,19 @@ def lambda_handler(event, context):
         logging.info(resp_data)
 
         if resp_data.get("ok", False):
-            message = "succeeded"
-            put_data_to_dynamodb(resp_data)
+            if authorize(resp_data):
+                message = "Installation request accepted and registration completed."
+                put_data_to_dynamodb(resp_data)
+            else:
+                status = 403  # Forbidden
+                message = "Error: Installation forbidden. Please contact the app owner."
         else:
             status = 500
             message = resp_data.get("error")
 
     else:
         status = 500
-        message = "Error: Looks like we are not getting code."
+        message = "Error: The required code is missing."
 
     return {
         "statusCode": status,

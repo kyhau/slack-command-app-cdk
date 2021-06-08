@@ -72,9 +72,6 @@ For details of sam-beta-cdk, see https://docs.aws.amazon.com/serverless-applicat
 ```bash
 cdk deploy K-CDK-SlackApp
 
-# If need to share the app with other Workspace, deploy also
-cdk deploy K-CDK-SlackApp-OAuth
-
 rm -rf cdk.out package */__pycache__ */*.egg-info */out.json
 ```
 
@@ -84,6 +81,18 @@ E.g. if command is `/testcdk`, then
 
 1. Run `/testcdk async`
 1. Run `/testcdk sync`
+
+## For Sharing Slack App without publishing to App Directory
+
+You will need to deploy also the following stack, which will create another service for for performing the OAuth 2.0 flow and turn the auth code into access token then store the details in a DynamoDB table.
+
+```
+cdk deploy K-CDK-SlackApp-OAuth
+```
+
+For details of Slack OAuth 2.0 v2, see
+- https://api.slack.com/authentication/oauth-v2
+- https://api.slack.com/methods/oauth.v2.access
 
 ## Notes on known sam-beta-cdk issues
 
