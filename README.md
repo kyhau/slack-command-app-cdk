@@ -3,7 +3,12 @@
 [![githubactions](https://github.com/kyhau/slack-command-app-cdk/workflows/Build-Test/badge.svg)](https://github.com/kyhau/slack-command-app-cdk/actions)
 [![travisci](https://travis-ci.org/kyhau/slack-command-app-cdk.svg?branch=master)](https://travis-ci.org/kyhau/slack-command-app-cdk)
 
-This repo provides the source code for building a Slack App/Bot with AWS API Gateway and Lambda Functions, deploying with [CDK v2](https://docs.aws.amazon.com/cdk/latest/guide/work-with-cdk-v2.html) and testing wth SAM CLI ([sam-beta-cdk](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-getting-started.html)).
+This repo provides the source code for building
+
+1. A Slack App/Bot with AWS API Gateway and Lambda Functions, deploying with [CDK v2](https://docs.aws.amazon.com/cdk/latest/guide/work-with-cdk-v2.html) and testing wth SAM CLI ([sam-beta-cdk](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-getting-started.html)).
+
+2. An OAuth 2.0 authorization flow service for sharing the Slack App with other Workspaces without registering in the public Slack App Directory. For details see "Apps distributed to multiple workspaces" in [Distributing Slack apps](https://api.slack.com/start/distributing#multi_workspace_apps). This stack includes an AWS API Gateway, a Lambda Function, and a DynamoDB table.
+
 This SlackApp can handle requests triggered from a [Slash Command](https://api.slack.com/interactivity/slash-commands) which will take longer than [3 seconds](https://api.slack.com/events-api) to process, and posts the details back to the user.
 
 ### Overview
@@ -82,7 +87,28 @@ E.g. if command is `/testcdk`, then
 1. Run `/testcdk async`
 1. Run `/testcdk sync`
 
-## For Sharing Slack App without publishing to App Directory
+## More on AWS WAF
+
+1. Add `AWS::WAFv2::RuleGroup` to protect the API Gateway by specifying rules such as
+    1. ByteMatchStatement: SearchString: Slackbot 1.0 (+https://api.slack.com/robots)
+    2. ByteMatchStatement: SearchString: team_id=TODO-slack-team-id
+    3. ByteMatchStatement: SearchString: team_domain=TODO-slack-domain
+
+---
+## To Share the Slack App with other Workspaces
+
+In order to share a Slack App with other Workspaces without registering in the public Slack App Directory, you will need to deploy also the following stack of the OAuth 2.0 authorization flow service.
+
+For details see "Apps distributed to multiple workspaces" in [Distributing Slack apps](https://api.slack.com/start/distributing#multi_workspace_apps).
+
+For details of Slack OAuth 2.0 v2 see
+- https://api.slack.com/authentication/oauth-v2
+- https://api.slack.com/methods/oauth.v2.access
+
+
+[lambda/OAuth.py](lambda/OAuth.py) also performs further authorization check with `team_id` (and `channel_id`).
+
+### Deploy
 
 You will need to deploy also the following stack, which will create another service for for performing the OAuth 2.0 flow and turn the auth code into access token then store the details in a DynamoDB table.
 
@@ -90,9 +116,34 @@ You will need to deploy also the following stack, which will create another serv
 cdk deploy K-CDK-SlackApp-OAuth
 ```
 
-For details of Slack OAuth 2.0 v2, see
-- https://api.slack.com/authentication/oauth-v2
-- https://api.slack.com/methods/oauth.v2.access
+#### From Slack App Owner
+
+1. Ask the potential user to provide
+    1. `team_id` (aka. Workspace ID)
+    1. `channel_id`
+2. Add to [settings_dev.json](settings_dev.json)
+3. Deploy the stacks again.
+4. Provide the users the **Sharable URL**. You can obtain this by going to Settings | Manage Distribution | Sharable URL
+
+#### From Slack App User
+
+1. Log in to your Slack Workspace **in a browser**.
+2. Open the **Sharable URL** in the browser. You will be asked to allow the access "Add shortcuts and/or slash commands that people can use".
+   1. Select the channel where the Slack App will be installed.
+   2. Click **Allow**.
+3. On success of authenticating your request with the `team_id` and `channel_id`, you should see
+   > Installation request accepted and registration completed.
+4. Then in the channel you specified in previous step, you should see
+   > added an integration to this channel: (you-app-name)
+
+   You should be able to see this Slack App under **App** as well.
+6. You can try
+   ```
+   /testcdk
+   ```
+
+Note that your Slack Workspace may have additional restriction and require Approval from Admin on installing new Slack App. In this case, you need to talk to your Slack Workspace Admin.
+
 
 ## Notes on known sam-beta-cdk issues
 
