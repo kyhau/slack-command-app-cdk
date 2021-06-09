@@ -7,19 +7,24 @@ import boto3
 
 logging.getLogger().setLevel(logging.INFO)
 
+CHANNEL_IDS = list(map(str.strip, os.environ.get("SlackChannelIds", "").split(",")))
+TEAM_DOMAINS = list(map(str.strip, os.environ.get("SlackDomains", "").split(",")))
+TEAM_IDS = list(map(str.strip, os.environ.get("SlackTeamIds", "").split(",")))
+
 CHILD_ASYNC_FUNCTION_NAME = os.environ.get("AsyncWorkerLambdaFunctionName", "AsyncWorker")
 CHILD_SYNC_FUNCTION_NAME = os.environ.get("SyncWorkerLambdaFunctionName", "SyncWorker")
 PARAMETER_KEY = os.environ.get("SlackAppTokenParameterKey")
 SLACK_COMMAND = os.environ.get("SlackCommand", "/testcdk")
 IS_AWS_SAM_LOCAL = os.environ.get("AWS_SAM_LOCAL") == "true"
-SLACK_TOKEN = boto3.client("ssm").get_parameter(Name=PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
+
+
 lambda_client = boto3.client("lambda")
 
 
 def respond(message):
     logging.info(message)
     resp = {
-        "response_type": "in_channel",    # visible to all channel members
+        "response_type": "in_channel",  # visible to all channel members
         "text": message,
     }
     return {
@@ -29,6 +34,33 @@ def respond(message):
         },
         "statusCode": "200",
     }
+
+
+def authenticate(token):
+    """Verify the token passed in"""
+    try:
+        expected_token = boto3.client("ssm").get_parameter(Name=PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
+    except Exception as e:
+        logging.error(f"Unable to retrieve data from parameter store: {e}")
+        return False
+
+    if token != expected_token and IS_AWS_SAM_LOCAL is False:
+        logging.error(f"Request token ({token}) does not match expected")
+        return False
+
+    return True
+
+
+def authorize(params):
+    """Just double check if this app is invoked from the expected domain channel"""
+
+    team_domain, team_id = params["team_domain"][0], params["team_id"][0]
+    if team_id not in TEAM_IDS or team_domain not in TEAM_DOMAINS:
+        return f"domain {team_domain} {team_id}"
+
+    channel_id, channel_name = params["channel_id"][0], params["channel_name"][0]
+    if channel_id not in CHANNEL_IDS:
+        return f"{channel_name} channel"
 
 
 def invoke_lambda(function_namme, payload_json, is_async):
@@ -45,12 +77,12 @@ def lambda_handler(event, context):
     params = parse_qs(event["body"])
     user_id = params["user_id"][0]
 
-    # Authentication and authorization
-    # Note that you may also compare api_app_id, team_domain, channel_id, channel_name etc.
-    token = params["token"][0]
-    if token != SLACK_TOKEN and IS_AWS_SAM_LOCAL is False:
-        logging.error(f"Request token ({token}) does not match expected.")
-        return respond(f"@<{user_id}> Invalid request token. Please contact your admin.")
+    if authenticate(params["token"][0]) is False:
+        return respond(f"Sorry <@{user_id}>, an authentication error occurred. Please contact your admin.")
+
+    result = authorize(params)
+    if result is not None:
+        return respond(f"Sorry <@{user_id}>, this app does not support the {result}.")
 
     user = params["user_name"][0]
     command = params["command"][0]
@@ -86,6 +118,6 @@ def lambda_handler(event, context):
                       + " processed at the moment. Please try again later."
 
     if message is None:
-        message = f"@<{user_id}>, I do not support {command} {command_text}."
+        message = f"<@{user_id}>, I do not support {command} {command_text}."
 
     return respond(message)

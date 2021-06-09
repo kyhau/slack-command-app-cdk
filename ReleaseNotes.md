@@ -1,3 +1,7 @@
+0.2.0 - 2021-06-05
+==================
+1. New stack `cdk deploy K-CDK-SlackApp-OAuth` to support OAuth 2.0 flow.
+
 0.1.0 - 2021-05-15
 ==================
 Initial version
