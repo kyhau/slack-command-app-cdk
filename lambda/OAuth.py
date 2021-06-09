@@ -39,10 +39,15 @@ def authorize(response_data):
     """Check if app is invoked from the expected domain channel"""
     try:
         team_id = response_data["team"]["id"]
-        channel_id = response_data["incoming_webhook"]["channel_id"]
+        channel_id = response_data.get("incoming_webhook", {}).get("channel_id")
 
-        if team_id in TEAM_IDS and channel_id in CHANNEL_IDS:
-            return True
+        if team_id in TEAM_IDS:
+            if channel_id is None:
+                # For app that can be installed in any channel or call the app directly.
+                return True
+
+            if channel_id in CHANNEL_IDS:
+                return True
 
     except Exception as e:
         logging.error(f"Failed to do authorization check: {e}")
