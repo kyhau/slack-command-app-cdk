@@ -11,15 +11,26 @@ This repo provides the source code for building
 
 This SlackApp can handle requests triggered from a [Slash Command](https://api.slack.com/interactivity/slash-commands) which will take longer than [3 seconds](https://api.slack.com/events-api) to process, and posts the details back to the user.
 
-### Overview
+## Overview
 
-![Architecture](doc/SlackApp-ArchitectureOverview.png)
+### Slack App Architecture
+
+![SlackApp-ArchitectureOverview](doc/SlackApp-ArchitectureOverview.png)
 
 1. An API Gateway to provide an endpoint to be invoked from a Slack Command.
 2. A Lambda Function [lambda/ImmediateResponse.py](lambda/ImmediateResponse.py) to perform authentication, some basic checks and send an intermediate response to Slack within 3 seconds (Slack requirement). This function invokes another Lambda function to to the request tasks (synchronously invocation for quick task; asynchronous invocation for long tasks).
 3. A Lambda Function [lambda/AsyncWorker.py](lambda/AsyncWorker.py) to perform actual operation that may take more than 3 seconds to finish.
 4. A Lambda Function [lambda/SyncWorker.py](lambda/SyncWorker.py) to perform actual operation that takes less than 3 seconds to finish.
 6. CloudWatch Loggroup for API Gateway and Lambda Functions.
+
+### OAuth 2.0 API Architecture
+
+![OAuth2API-ArchitectureOverview](doc/OAuth2API-ArchitectureOverview.png)
+
+1. An API Gateway to provide an endpoint as the Sharable URL in Slack.
+2. A Lambda Function [lambda/OAuth.py](lambda/OAuth.py) to perform OAuth 2.0 flow and turn the auth code into access token then store it in a DynamoDB table.
+3. A DynamoDB table for storing the auth request data and token.
+4. CloudWatch Loggroup for API Gateway and Lambda Functions.
 
 ## Setup on Slack
 
