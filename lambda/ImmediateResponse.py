@@ -17,8 +17,8 @@ PARAMETER_KEY = os.environ.get("SlackAppTokenParameterKey")
 SLACK_COMMAND = os.environ.get("SlackCommand", "/testcdk")
 IS_AWS_SAM_LOCAL = os.environ.get("AWS_SAM_LOCAL") == "true"
 
-lambda_client = boto3.client("lambda")
-ssm_client = boto3.client("ssm")
+lambda_client = boto3.client("lambda", region_name=os.environ.get("AWS_REGION", "ap-southeast-2"))
+ssm_client = boto3.client("ssm", region_name=os.environ.get("AWS_REGION", "ap-southeast-2"))
 
 
 def respond(message):
