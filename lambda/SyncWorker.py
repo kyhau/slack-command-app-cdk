@@ -1,7 +1,6 @@
 """
 For processing requests that will take less than 3 seconds to process.
 """
-import json
 import logging
 
 logging.getLogger().setLevel(logging.INFO)
@@ -14,7 +13,7 @@ def lambda_handler(event, context):
     command_text = event.get("text", [None])[0]
     response_url = event.get("response_url")[0]
 
-    message = f"Processed <@{user_id}> {command} by sync worker."
+    message = f"Processed <@{user_id}> {command} {command_text} by SyncWorker."
     logging.info(message)
 
     return {
