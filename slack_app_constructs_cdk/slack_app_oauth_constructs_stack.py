@@ -10,6 +10,7 @@ lambda_dir = "lambda"
 CLIENT_ID_PARAMETER_NAME = "/apps/slack_app/k_cdk/client_id"
 CLIENT_SECRET_PARAMETER_NAME = "/apps/slack_app/k_cdk/client_secret"
 
+
 def get_team_ids(settings):
     return [v["team_id"] for v in settings["access"].values() if v.get("team_id")]
 
