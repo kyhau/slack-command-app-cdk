@@ -28,7 +28,7 @@ IS_AWS_SAM_LOCAL = os.environ.get("AWS_SAM_LOCAL") == "true"
 SLACK_OAUTH_V2_URL = "https://slack.com/api/oauth.v2.access"
 
 http = urllib3.PoolManager()
-table = boto3.resource("dynamodb").Table(DDB_TABLE_NAME)
+table = boto3.resource("dynamodb", region_name=os.environ.get("AWS_REGION", "ap-southeast-2")).Table(DDB_TABLE_NAME)
 
 
 def retrieve_client_credentials():
