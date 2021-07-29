@@ -2,13 +2,13 @@ import boto3
 
 AWS_REGION = "ap-southeast-2"
 DATA = {
-    "token": None,  # TODO: slack verification token
+    "token": None,  # Slack verification token
     "client_id": None,  # optional: required for deploying K-CDK-SlackApp-OAuth for app sharing with oauth 2.0
     "client_secret": None,  # optional: required for deploying K-CDK-SlackApp-OAuth for app sharing with oauth 2.0
 }
 PARAMETER_KEY_PREFIX = "/apps/slack_app/k_cdk"
 SLACK_APP_NAME = "K-CDK-SlackApp"
-#key_id = "TODO The KMS Key ID (optional)"
+# key_id = "TODO The KMS Key ID (optional)"
 
 
 def create_parameter(name, value):
@@ -17,7 +17,7 @@ def create_parameter(name, value):
         Description=f"{SLACK_APP_NAME} {name}",
         Value=value,
         Type="SecureString",
-        #KeyId=key_id,
+        # KeyId=key_id,
         Tags=[
             {
                 "Key": "Billing",

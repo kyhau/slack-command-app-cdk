@@ -10,12 +10,14 @@ lambda_dir = "lambda"
 CLIENT_ID_PARAMETER_NAME = "/apps/slack_app/k_cdk/client_id"
 CLIENT_SECRET_PARAMETER_NAME = "/apps/slack_app/k_cdk/client_secret"
 
-get_team_ids = lambda settings: [v["team_id"] for v in settings.values() if v.get("team_id")]
+
+def get_team_ids(settings):
+    return [v["team_id"] for v in settings["access"].values() if v.get("team_id")]
 
 
 def get_channel_ids(settings):
     ret = []
-    for v in settings.values():
+    for v in settings["access"].values():
         if v.get("channels"):
             ret.extend(v["channels"].keys())
     return ret
@@ -94,9 +96,12 @@ class SlackAppOAuthConstructsStack(Stack):
             self, f"{self.id}-{function_name}",
             code=lambda_.Code.from_asset(
                 lambda_dir,
-                exclude=["*.test.py"]
+                exclude=[
+                    "*.test.py",
+                    "requirements.txt",
+                ],
             ),
-            current_version_options = lambda_.VersionOptions(
+            current_version_options=lambda_.VersionOptions(
                 removal_policy=RemovalPolicy.DESTROY,
                 retry_attempts=2,
             ),
@@ -105,7 +110,7 @@ class SlackAppOAuthConstructsStack(Stack):
             log_retention=RetentionDays.ONE_DAY,
             role=custom_role,
             runtime=lambda_.Runtime.PYTHON_3_8,
-            timeout= Duration.seconds(900),
+            timeout=Duration.seconds(900),
             tracing=lambda_.Tracing.DISABLED,
         )
 
@@ -114,7 +119,7 @@ class SlackAppOAuthConstructsStack(Stack):
         return iam_.Role(
             self, role_name,
             assumed_by=iam_.ServicePrincipal("lambda.amazonaws.com"),
-            inline_policies = {
+            inline_policies={
                 f"{function_name}-ExecutionPolicy": iam_.PolicyDocument(
                     statements=[
                         iam_.PolicyStatement(
@@ -141,7 +146,7 @@ class SlackAppOAuthConstructsStack(Stack):
             },
             managed_policies=[
                 iam_.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
-                #iam_.ManagedPolicy.from_aws_managed_policy_name("AWSXrayWriteOnlyAccess"),
+                # iam_.ManagedPolicy.from_aws_managed_policy_name("AWSXrayWriteOnlyAccess"),
             ],
             role_name=role_name,
         )

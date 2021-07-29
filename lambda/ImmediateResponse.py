@@ -17,8 +17,8 @@ PARAMETER_KEY = os.environ.get("SlackAppTokenParameterKey")
 SLACK_COMMAND = os.environ.get("SlackCommand", "/testcdk")
 IS_AWS_SAM_LOCAL = os.environ.get("AWS_SAM_LOCAL") == "true"
 
-
-lambda_client = boto3.client("lambda")
+lambda_client = boto3.client("lambda", region_name=os.environ.get("AWS_REGION", "ap-southeast-2"))
+ssm_client = boto3.client("ssm", region_name=os.environ.get("AWS_REGION", "ap-southeast-2"))
 
 
 def respond(message):
@@ -38,13 +38,16 @@ def respond(message):
 
 def authenticate(token):
     """Verify the token passed in"""
+    if IS_AWS_SAM_LOCAL is True:
+        return True
+
     try:
-        expected_token = boto3.client("ssm").get_parameter(Name=PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
+        expected_token = ssm_client.get_parameter(Name=PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
     except Exception as e:
         logging.error(f"Unable to retrieve data from parameter store: {e}")
         return False
 
-    if token != expected_token and IS_AWS_SAM_LOCAL is False:
+    if token != expected_token:
         logging.error(f"Request token ({token}) does not match expected")
         return False
 
@@ -118,6 +121,6 @@ def lambda_handler(event, context):
                       + " processed at the moment. Please try again later."
 
     if message is None:
-        message = f"<@{user_id}>, I do not support {command} {command_text}."
+        message = f"<@{user_id}>, this app does not support {command} {command_text}."
 
     return respond(message)

@@ -1,9 +1,9 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: "Build-Test"
+name: build-slackapp
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build:
@@ -13,7 +13,7 @@ jobs:
         python-version: [3.8, 3.9]
 
     steps:
-    - name: Checkout sources
+    - name: Checkout source
       uses: actions/checkout@v2
 
     - name: Set up Python ${{ matrix.python-version }}
@@ -21,9 +21,17 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Build dependencies
+    - name: Set up build environment
       run: |
         sudo npm install -g aws-cdk@next
-        python -m pip install --upgrade pip virtualenv setuptools
+        python -m pip install -U pip virtualenv
         pip install -r requirements.txt
 
+    - name: Run flake8 lint, unit tests
+      run: |
+        flake8 --ignore E501,F541,W605 lambda/ slack_app_constructs_cdk/ scripts/*.py
+        echo "INFO: Run unit tests"
+        python lambda/AsyncWorker.test.py
+        python lambda/ImmediateResponse.test.py
+        python lambda/OAuth.test.py
+        python lambda/SyncWorker.test.py
