@@ -23,13 +23,14 @@ def post_response_to_slack(response_url, message):
 
 
 def lambda_handler(event, context):
+    logging.info(json.dumps(event, indent=2))
     user_id = event["user_id"][0]
     command = event["command"][0]
     channel = event["channel_name"][0]
     command_text = event.get("text", [None])[0]
     response_url = event.get("response_url")[0]
 
-    message = f"<@{user_id}> invoked {command} in {channel} with the following text: {command_text}"
+    message = f"<@{user_id}> invoked `{command}` in {channel} with the following text: `{command_text}`"
     logging.info(message)
 
     post_response_to_slack(response_url, message)

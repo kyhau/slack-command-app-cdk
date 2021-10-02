@@ -5,7 +5,7 @@
 
 This repo provides the source code for building
 
-1. A Slack App/Bot with AWS API Gateway and Lambda Functions, deploying with [CDK v2](https://docs.aws.amazon.com/cdk/latest/guide/work-with-cdk-v2.html) and testing wth SAM CLI ([sam-beta-cdk](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-getting-started.html)).
+1. A [Slack Command](https://api.slack.com/interactivity/slash-commands) App/Bot with AWS API Gateway and Lambda Functions, deploying with [CDK v2](https://docs.aws.amazon.com/cdk/latest/guide/work-with-cdk-v2.html) and testing wth SAM CLI ([sam-beta-cdk](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-getting-started.html)).
 
 2. An OAuth 2.0 authorization flow service for sharing the Slack App with other Workspaces without registering in the public Slack App Directory. For details see "Apps distributed to multiple workspaces" in [Distributing Slack apps](https://api.slack.com/start/distributing#multi_workspace_apps). This stack includes an AWS API Gateway, a Lambda Function, and a DynamoDB table, with AWS WAF (optional).
 

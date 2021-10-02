@@ -77,6 +77,7 @@ def invoke_lambda(function_namme, payload_json, is_async):
 
 
 def lambda_handler(event, context):
+    logging.info(json.dumps(event.get("body", {}), indent=2))
     params = parse_qs(event["body"])
     user_id = params["user_id"][0]
 
@@ -117,10 +118,10 @@ def lambda_handler(event, context):
 
         if message is None:
             logging.error(resp)
-            message = f"<@{user_id}>, your request on {channel} ({command} {command_text}) cannot be" \
+            message = f"<@{user_id}>, your request on {channel} `{command} {command_text}` cannot be" \
                       + " processed at the moment. Please try again later."
 
     if message is None:
-        message = f"<@{user_id}>, this app does not support {command} {command_text}."
+        message = f"<@{user_id}>, this app does not support `{command} {command_text}`."
 
     return respond(message)
