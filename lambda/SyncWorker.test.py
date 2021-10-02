@@ -23,7 +23,7 @@ class TestFunction(unittest.TestCase):
         self.assertEqual(
             ret,
             {
-                "body": "Processed <@test_user_id> /slack-unittest sync by SyncWorker.",
+                "body": "Processed <@test_user_id> `/slack-unittest sync` by SyncWorker.",
                 "statusCode": 200
             }
         )

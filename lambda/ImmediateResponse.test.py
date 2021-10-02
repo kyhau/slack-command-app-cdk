@@ -115,7 +115,7 @@ class TestFunction(unittest.TestCase):
 
             ret = func.lambda_handler(mock_event(), None)
 
-            self.assertDictEqual(ret, mock_response("<@test-user-id-a>, this app does not support /test-invalid-command help."))
+            self.assertDictEqual(ret, mock_response("<@test-user-id-a>, this app does not support `/test-invalid-command help`."))
 
 
 if __name__ == "__main__":
