@@ -1,6 +1,6 @@
 # slack-command-app-cdk
 
-[![githubactions](https://github.com/kyhau/slack-command-app-cdk/workflows/Build-Test/badge.svg)](https://github.com/kyhau/slack-command-app-cdk/actions)
+[![githubactions](https://github.com/kyhau/slack-command-app-cdk/workflows/build-slackapp/badge.svg)](https://github.com/kyhau/slack-command-app-cdk/actions)
 [![travisci](https://travis-ci.org/kyhau/slack-command-app-cdk.svg?branch=master)](https://travis-ci.org/kyhau/slack-command-app-cdk)
 
 This repo provides the source code for building
