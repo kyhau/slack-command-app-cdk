@@ -1,3 +1,9 @@
+"""
+ImmediateResponse aims to do
+- authentication and authorization,
+- invoke AsyncWorker or SyncWorker
+- return an immedate response to caller within 3 seconds
+"""
 import json
 import logging
 import os
@@ -7,18 +13,20 @@ import boto3
 
 logging.getLogger().setLevel(logging.INFO)
 
-CHANNEL_IDS = list(map(str.strip, os.environ.get("SlackChannelIds", "").split(",")))
-TEAM_DOMAINS = list(map(str.strip, os.environ.get("SlackDomains", "").split(",")))
-TEAM_IDS = list(map(str.strip, os.environ.get("SlackTeamIds", "").split(",")))
+SLACK_APP_ID = os.environ.get("SlackAppId")
+SLACK_CHANNEL_IDS = list(map(str.strip, os.environ.get("SlackChannelIds", "").split(",")))
+SLACK_COMMAND = os.environ.get("SlackCommand")
+SLACK_TEAM_IDS = list(map(str.strip, os.environ.get("SlackTeamIds", "").split(",")))
+SLACK_TEAM_DOMAINS = list(map(str.strip, os.environ.get("SlackDomains", "").split(",")))
+SLACK_VERIFICATION_TOKEN_SSM_PARAMETER_KEY = os.environ.get("SlackVerificationTokenParameterKey")
 
 CHILD_ASYNC_FUNCTION_NAME = os.environ.get("AsyncWorkerLambdaFunctionName", "AsyncWorker")
 CHILD_SYNC_FUNCTION_NAME = os.environ.get("SyncWorkerLambdaFunctionName", "SyncWorker")
-PARAMETER_KEY = os.environ.get("SlackAppTokenParameterKey")
-SLACK_COMMAND = os.environ.get("SlackCommand", "/testcdk")
 IS_AWS_SAM_LOCAL = os.environ.get("AWS_SAM_LOCAL") == "true"
+TARGET_REGION = os.environ.get("AWS_REGION", "ap-southeast-2")
 
-lambda_client = boto3.client("lambda", region_name=os.environ.get("AWS_REGION", "ap-southeast-2"))
-ssm_client = boto3.client("ssm", region_name=os.environ.get("AWS_REGION", "ap-southeast-2"))
+lambda_client = boto3.client("lambda", region_name=TARGET_REGION)
+ssm_client = boto3.client("ssm", region_name=TARGET_REGION)
 
 
 def respond(message):
@@ -42,7 +50,8 @@ def authenticate(token):
         return True
 
     try:
-        expected_token = ssm_client.get_parameter(Name=PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
+        expected_token = ssm_client.get_parameter(
+            Name=SLACK_VERIFICATION_TOKEN_SSM_PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
     except Exception as e:
         logging.error(f"Unable to retrieve data from parameter store: {e}")
         return False
@@ -54,16 +63,20 @@ def authenticate(token):
     return True
 
 
-def authorize(params):
-    """Just double check if this app is invoked from the expected domain channel"""
+def authorize(app_id, channel_id, team_id, team_domain):
+    """Just double check if this app is invoked from the expected app/channel/team"""
 
-    team_domain, team_id = params["team_domain"][0], params["team_id"][0]
-    if team_id not in TEAM_IDS or team_domain not in TEAM_DOMAINS:
-        return f"domain {team_domain} {team_id}"
+    if app_id != SLACK_APP_ID:
+        return f"app ID {app_id}"
 
-    channel_id, channel_name = params["channel_id"][0], params["channel_name"][0]
-    if channel_id not in CHANNEL_IDS:
-        return f"{channel_name} channel"
+    if team_id not in SLACK_TEAM_IDS:
+        return f"team ID {team_id}"
+
+    if team_domain not in SLACK_TEAM_DOMAINS:
+        return f"team domain {team_domain}"
+
+    if channel_id not in SLACK_CHANNEL_IDS:
+        return f"channel ID {channel_id}"
 
 
 def invoke_lambda(function_namme, payload_json, is_async):
@@ -77,16 +90,22 @@ def invoke_lambda(function_namme, payload_json, is_async):
 
 
 def lambda_handler(event, context):
-    logging.info(json.dumps(event.get("body", {}), indent=2))
-    params = parse_qs(event["body"])
+    event_body = event.get("body")
+    logging.info(f"Received event[body]: {event_body}")
+
+    params = parse_qs(event_body)
+    app_id = params["api_app_id"][0]
+    channel_id = params["channel_id"][0]
+    team_domain= params["team_domain"][0]
+    team_id  = params["team_id"][0]
     user_id = params["user_id"][0]
 
     if authenticate(params["token"][0]) is False:
         return respond(f"Sorry <@{user_id}>, an authentication error occurred. Please contact your admin.")
 
-    result = authorize(params)
+    result = authorize(app_id, channel_id, team_id, team_domain)
     if result is not None:
-        return respond(f"Sorry <@{user_id}>, this app does not support the {result}.")
+        return respond(f"Sorry <@{user_id}>, this app does not support this {result}.")
 
     user = params["user_name"][0]
     command = params["command"][0]

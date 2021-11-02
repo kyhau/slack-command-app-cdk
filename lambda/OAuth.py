@@ -19,23 +19,26 @@ logging.getLogger("botocore").setLevel(logging.CRITICAL)
 logging.getLogger("boto3").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
 
-CLIENT_ID_PARAMETER_KEY = os.environ.get("SlackAppClientIdParameterKey")
-CLIENT_SECRET_PARAMETER_KEY = os.environ.get("SlackAppClientSecretParameterKey")
-DDB_TABLE_NAME = os.environ.get("SlackAppOAuthDynamoDBTable")
-CHANNEL_IDS = list(map(str.strip, os.environ.get("SlackChannelIds", "").split(",")))
-TEAM_IDS = list(map(str.strip, os.environ.get("SlackTeamIds", "").split(",")))
-IS_AWS_SAM_LOCAL = os.environ.get("AWS_SAM_LOCAL") == "true"
-SLACK_OAUTH_V2_URL = "https://slack.com/api/oauth.v2.access"
+SLACK_APP_ID = os.environ.get("SlackAppId")
+SLACK_APP_CLIENT_ID_PARAMETER_KEY = os.environ.get("SlackAppClientIdParameterKey")
+SLACK_APP_CLIENT_SECRET_PARAMETER_KEY = os.environ.get("SlackAppClientSecretParameterKey")
+SLACK_API_OAUTH_V2_URL = "https://slack.com/api/oauth.v2.access"
+SLACK_CHANNEL_IDS = list(map(str.strip, os.environ.get("SlackChannelIds", "").split(",")))
+SLACK_TEAM_IDS = list(map(str.strip, os.environ.get("SlackTeamIds", "").split(",")))
+OAUTH_DDB_TABLE_NAME = os.environ.get("OAuthDynamoDBTable")
 
+IS_AWS_SAM_LOCAL = os.environ.get("AWS_SAM_LOCAL") == "true"
+TARGET_REGION = os.environ.get("AWS_REGION", "ap-southeast-2")
+
+oauth_table = boto3.resource("dynamodb", region_name=TARGET_REGION).Table(OAUTH_DDB_TABLE_NAME)
 http = urllib3.PoolManager()
-table = boto3.resource("dynamodb", region_name=os.environ.get("AWS_REGION", "ap-southeast-2")).Table(DDB_TABLE_NAME)
 
 
 def retrieve_client_credentials():
     try:
-        ssm_client = boto3.client("ssm")
-        v1 = ssm_client.get_parameter(Name=CLIENT_ID_PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
-        v2 = ssm_client.get_parameter(Name=CLIENT_SECRET_PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
+        ssm_client = boto3.client("ssm", region_name=TARGET_REGION)
+        v1 = ssm_client.get_parameter(Name=SLACK_APP_CLIENT_ID_PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
+        v2 = ssm_client.get_parameter(Name=SLACK_APP_CLIENT_SECRET_PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
         return v1, v2
     except Exception as e:
         if IS_AWS_SAM_LOCAL is False:
@@ -54,10 +57,11 @@ def client_credentials():
 def authorize(response_data):
     """Check if app is invoked from the expected domain channel"""
     try:
+        app_id = response_data["app_id"]
         team_id = response_data["team"]["id"]
         channel_id = response_data["incoming_webhook"]["channel_id"]
 
-        if team_id in TEAM_IDS and channel_id in CHANNEL_IDS:
+        if app_id == SLACK_APP_ID and team_id in SLACK_TEAM_IDS and channel_id in SLACK_CHANNEL_IDS:
             return True
 
     except Exception as e:
@@ -76,8 +80,8 @@ def put_data_to_dynamodb(response_data):
             elif k not in ["ok"]:
                 data[k] = v
 
-        table.put_item(
-            TableName=DDB_TABLE_NAME,
+        oauth_table.put_item(
+            TableName=OAUTH_DDB_TABLE_NAME,
             Item=data
         )
     except Exception as e:
@@ -100,7 +104,7 @@ def lambda_handler(event, context):
             "client_secret": client_secret,
         }
         encoded_args = urlencode(data)
-        url = f"{SLACK_OAUTH_V2_URL}?{encoded_args}"
+        url = f"{SLACK_API_OAUTH_V2_URL}?{encoded_args}"
         resp = http.request("POST", url, headers={"Content-Type": "application/x-www-form-urlencoded"})
 
         status = resp.status

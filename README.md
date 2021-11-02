@@ -1,19 +1,22 @@
 # slack-command-app-cdk
 
 [![githubactions](https://github.com/kyhau/slack-command-app-cdk/workflows/build-slackapp/badge.svg)](https://github.com/kyhau/slack-command-app-cdk/actions)
-[![travisci](https://travis-ci.org/kyhau/slack-command-app-cdk.svg?branch=master)](https://travis-ci.org/kyhau/slack-command-app-cdk)
+
+This repo creates a [Slack Commands](https://api.slack.com/interactivity/slash-commands) App/bot that responds to a command (i.e. `/find`) and sends the response to the same channel.
+
+If you want to use [Slack Chat](https://api.slack.com/interactivity/slash-commands) that responds to messages when the app is mentioned (i.e. `@<app-name>`) and sends the response to the corresponding thread, see another repo [kyhau/slack-chat-app-cdk](https://github.com/kyhau/slack-chat-app-cdk).
+
+This SlackApp can handle requests triggered from a Slash Command which will take longer than [3 seconds](https://api.slack.com/events-api) to process, and posts the details back to the user.
+
+---
+
+## Overview
 
 This repo provides the source code for building
 
 1. A [Slack Command](https://api.slack.com/interactivity/slash-commands) App/Bot with AWS API Gateway and Lambda Functions, deploying with [CDK v2](https://docs.aws.amazon.com/cdk/latest/guide/work-with-cdk-v2.html) and testing wth SAM CLI ([sam-beta-cdk](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-getting-started.html)).
 
 2. An OAuth 2.0 authorization flow service for sharing the Slack App with other Workspaces without registering in the public Slack App Directory. For details see "Apps distributed to multiple workspaces" in [Distributing Slack apps](https://api.slack.com/start/distributing#multi_workspace_apps). This stack includes an AWS API Gateway, a Lambda Function, and a DynamoDB table, with AWS WAF (optional).
-
-This SlackApp can handle requests triggered from a [Slash Command](https://api.slack.com/interactivity/slash-commands) which will take longer than [3 seconds](https://api.slack.com/events-api) to process, and posts the details back to the user.
-
----
-
-## Overview
 
 ### Slack App Architecture
 
@@ -31,7 +34,7 @@ This SlackApp can handle requests triggered from a [Slash Command](https://api.s
 
 1. An API Gateway to provide an endpoint as the Sharable URL in Slack.
 2. A Lambda Function [lambda/OAuth.py](lambda/OAuth.py) to perform OAuth 2.0 flow and turn the auth code into access token then store it in a DynamoDB table.
-3. A DynamoDB table for storing the auth request data and token.
+3. A DynamoDB table for storing the oauth tokens of all app installations.
 4. CloudWatch Loggroup for API Gateway and Lambda Functions.
 
 ---
@@ -58,7 +61,7 @@ To create a **Slack Command** in Slack (the default command in this repo is **`/
 
 ---
 
-## Local Development, Build, Test and Deploy
+## Deployment (without using GitHub Actions/Workflows)
 
 Prerequisites
 1. Install CDK v2: `npm install -g aws-cdk@next`
@@ -78,47 +81,11 @@ cdk bootstrap
 cdk ls
 
 cdk synth
-```
 
-### Run unit tests and flake8 lint tests
+# Deploy the stack
+cdk deploy K-CDK-SlackCommandApp
 
-```
-python lambda/ImmediateResponse.test.py
-python lambda/AsyncWorker.test.py
-python lambda/SyncWorker.test.py
-python lambda/OAuth.test.py
-
-flake8 --ignore E501,F541,W605 lambda/ slack_app_constructs_cdk/ scripts/*.py
-```
-
-### Test Lambda function locally with AWS SAM CLI and AWS CDK
-
-Prerequisites:
-1. Install [sam-beta-cdk](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-getting-started.html)
-2. Start Docker
-
-```bash
-# Prepare the deployment artifacts
-sam-beta-cdk build
-
-# Invoke the function STACK_NAME/FUNCTION_IDENTIFIER
-sam-beta-cdk local invoke K-CDK-SlackApp/K-CDK-SlackApp-ImmediateResponse -e tests/event_async.json
-sam-beta-cdk local invoke K-CDK-SlackApp/K-CDK-SlackApp-ImmediateResponse -e tests/event_sync.json
-
-# To start the API declared in the AWS CDK application
-sam-beta-cdk local start-api
-
-# To start a local endpoint that emulates AWS Lambda
-sam-beta-cdk local start-lambda
-```
-
-For details of sam-beta-cdk, see https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-testing.html.
-
-### Deploy
-
-```bash
-cdk deploy K-CDK-SlackApp
-
+# Clean up
 rm -rf cdk.out package */__pycache__ */*.egg-info */out.json
 ```
 
@@ -140,9 +107,9 @@ E.g. if command is `/testcdk`, then
 
 ---
 
-## To Share the Slack App with other Workspaces
+## To Share the Slack App with other Slack Workspaces
 
-In order to share a Slack App with other Workspaces without registering in the public Slack App Directory, you will need to deploy also the following stack of the OAuth 2.0 authorization flow service.
+In order to share a Slack App with other Slack Workspaces without registering in the public Slack App Directory, you will need to deploy also the following stack of the OAuth 2.0 authorization flow service.
 
 For details see "Apps distributed to multiple workspaces" in [Distributing Slack apps](https://api.slack.com/start/distributing#multi_workspace_apps).
 
@@ -151,15 +118,22 @@ For details of Slack OAuth 2.0 v2 see
 - https://api.slack.com/methods/oauth.v2.access
 
 
-[lambda/OAuth.py](lambda/OAuth.py) also performs further authorization check with `team_id` (and `channel_id`).
+[lambda/OAuth.py](lambda/OAuth.py) also performs further authorization check with `app_id`, `team_id` and `channel_id`.
 
-### Deploy
+### Deployment (without using GitHub Actions/Workflows)
 
-You will need to deploy also the following stack, which will create another service for for performing the OAuth 2.0 flow and turn the auth code into access token then store the details in a AWS DynamoDB table.
+1. You will need to deploy also the following stack, which will create another service for for performing the OAuth 2.0 flow and turn the auth code into access token then store the details in a AWS DynamoDB table.
 
-```
-cdk deploy K-CDK-SlackApp-OAuth
-```
+    ```
+    cdk deploy K-CDK-SlackCommandAppSharing
+    ```
+
+2. Go to api.slack.com, select your app, then
+    1. Go to **Settings | OAuth & Permissions | Redirect URLs**, add the API Gateway URL of the K-CDK-SlackCommandAppSharing stack. For example:
+        ```
+        https://<api-gateway-id>.execute-api.ap-southeast-2.amazonaws.com/v1/oauth2
+        ```
+    2. Go to **Settings | Manage Distribution | Activate Public Distribution**
 
 ### Steps to Install
 
@@ -185,7 +159,7 @@ cdk deploy K-CDK-SlackApp-OAuth
 
    ![SlackAppInstall-01](doc/SlackAppInstall-01.png)
 
-3. On success of authenticating your request with the `team_id` and `channel_id`, you should see
+3. On success of authenticating your request with the `app_id`, `team_id` and `channel_id`, you should see
    > Installation request accepted and registration completed.
    ![SlackAppInstall-02](doc/SlackAppInstall-02.png)
 
@@ -201,6 +175,44 @@ cdk deploy K-CDK-SlackApp-OAuth
 
 Note that your Slack Workspace may have additional restriction and require Approval from Admin on installing new Slack App. In this case, you need to talk to your Slack Workspace Admin.
 
+---
+
+## Local Development, Build, Test and Deploy
+### Run unit tests and flake8 lint tests
+
+```bash
+python lambda/ImmediateResponse.test.py
+python lambda/AsyncWorker.test.py
+python lambda/SyncWorker.test.py
+python lambda/OAuth.test.py
+
+flake8 --ignore E501,F541,W605 lambda/ slack_app_constructs_cdk/ scripts/*.py
+```
+
+### Test Lambda function locally with AWS SAM CLI and AWS CDK
+
+Prerequisites:
+1. Install [sam-beta-cdk](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-getting-started.html)
+2. Start Docker
+
+```bash
+# Prepare the deployment artifacts
+sam-beta-cdk build
+
+# Invoke the function STACK_NAME/FUNCTION_IDENTIFIER
+sam-beta-cdk local invoke K-CDK-SlackCommandApp/K-CDK-SlackCommandApp-ImmediateResponse -e tests/event_async.json
+sam-beta-cdk local invoke K-CDK-SlackCommandApp/K-CDK-SlackCommandApp-ImmediateResponse -e tests/event_sync.json
+
+# To start the API declared in the AWS CDK application
+sam-beta-cdk local start-api
+
+# To start a local endpoint that emulates AWS Lambda
+sam-beta-cdk local start-lambda
+```
+
+For details of sam-beta-cdk, see https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-cdk-testing.html.
+
+---
 
 ## Notes on known sam-beta-cdk issues
 
