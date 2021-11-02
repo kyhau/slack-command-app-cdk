@@ -96,8 +96,8 @@ def lambda_handler(event, context):
     params = parse_qs(event_body)
     app_id = params["api_app_id"][0]
     channel_id = params["channel_id"][0]
-    team_domain= params["team_domain"][0]
-    team_id  = params["team_id"][0]
+    team_domain = params["team_domain"][0]
+    team_id = params["team_id"][0]
     user_id = params["user_id"][0]
 
     if authenticate(params["token"][0]) is False:
