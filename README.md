@@ -17,7 +17,7 @@ This SlackApp can handle requests triggered from a [Slash Command](https://api.s
 
 ### Slack App Architecture
 
-![SlackApp-ArchitectureOverview](doc/SlackApp-ArchitectureOverview.png)
+![SlackApp-ArchitectureOverview](docs/SlackApp-ArchitectureOverview.png)
 
 1. An API Gateway to provide an endpoint to be invoked from a Slack Command.
 2. A Lambda Function [lambda/ImmediateResponse.py](lambda/ImmediateResponse.py) to perform authentication, some basic checks and send an intermediate response to Slack within 3 seconds (Slack requirement). This function invokes another Lambda function to to the request tasks (synchronously invocation for quick task; asynchronous invocation for long tasks).
@@ -27,7 +27,7 @@ This SlackApp can handle requests triggered from a [Slash Command](https://api.s
 
 ### OAuth 2.0 API Architecture
 
-![OAuth2API-ArchitectureOverview](doc/OAuth2API-ArchitectureOverview.png)
+![OAuth2API-ArchitectureOverview](docs/OAuth2API-ArchitectureOverview.png)
 
 1. An API Gateway to provide an endpoint as the Sharable URL in Slack.
 2. A Lambda Function [lambda/OAuth.py](lambda/OAuth.py) to perform OAuth 2.0 flow and turn the auth code into access token then store it in a DynamoDB table.
@@ -183,11 +183,11 @@ cdk deploy K-CDK-SlackApp-OAuth
    1. Select the channel where the Slack App will be installed.
    2. Click **Allow**.
 
-   ![SlackAppInstall-01](doc/SlackAppInstall-01.png)
+   ![SlackAppInstall-01](docs/SlackAppInstall-01.png)
 
 3. On success of authenticating your request with the `team_id` and `channel_id`, you should see
    > Installation request accepted and registration completed.
-   ![SlackAppInstall-02](doc/SlackAppInstall-02.png)
+   ![SlackAppInstall-02](docs/SlackAppInstall-02.png)
 
 4. Then in the channel you specified in previous step, you should see
    > added an integration to this channel: (you-app-name)
