@@ -5,7 +5,7 @@ from aws_cdk import aws_lambda as lambda_
 from aws_cdk.aws_logs import LogGroup, RetentionDays
 from constructs import Construct
 
-lambda_dir = "lambda"
+LAMBDA_DIR = "lambda"
 
 
 def get_channel_ids(settings):
@@ -37,6 +37,8 @@ class SlackAppConstructsStack(Stack):
             type="String",
         ).value_as_string
 
+        ssm_param_key_verification_token = settings["ssm_parameter_key_verification_token"]
+
         # Create function AsyncWorker
         self.func_async_worker = self.create_lambda("AsyncWorker", custom_role=None)
 
@@ -44,15 +46,19 @@ class SlackAppConstructsStack(Stack):
         self.func_sync_worker = self.create_lambda("SyncWorker", custom_role=None)
 
         # Create function and role for ImmediateResponse
-        func_immediate_response_role = self.create_immediate_response_execution_role(f"{id}-ImmediateResponse", settings["ssmparametertokenkey"])
+        func_immediate_response_role = self.create_immediate_response_execution_role(
+            f"{id}-ImmediateResponse",
+            ssm_param_key_verification_token,
+        )
         func_immediate_response = self.create_lambda("ImmediateResponse", custom_role=func_immediate_response_role)
-        func_immediate_response.add_environment("SlackAppTokenParameterKey", settings["ssmparametertokenkey"])
-        func_immediate_response.add_environment("SlackCommand", settings["command"])
-        func_immediate_response.add_environment("AsyncWorkerLambdaFunctionName", f"{id}-AsyncWorker")
-        func_immediate_response.add_environment("SyncWorkerLambdaFunctionName", f"{id}-SyncWorker")
+        func_immediate_response.add_environment("SlackAppId", settings["slack_app_id"])
         func_immediate_response.add_environment("SlackChannelIds", ",".join(get_channel_ids(settings)))
+        func_immediate_response.add_environment("SlackCommand", settings["command"])
         func_immediate_response.add_environment("SlackDomains", ",".join(get_team_domains(settings)))
         func_immediate_response.add_environment("SlackTeamIds", ",".join(get_team_ids(settings)))
+        func_immediate_response.add_environment("SlackVerificationTokenParameterKey", ssm_param_key_verification_token)
+        func_immediate_response.add_environment("AsyncWorkerLambdaFunctionName", f"{id}-AsyncWorker")
+        func_immediate_response.add_environment("SyncWorkerLambdaFunctionName", f"{id}-SyncWorker")
 
         api = apigw_.LambdaRestApi(
             self, f"{id}-API",
@@ -84,12 +90,12 @@ class SlackAppConstructsStack(Stack):
 
     def create_lambda(self, function_name: str, custom_role: iam_.Role) -> lambda_.Function:
         if custom_role is None:
-            custom_role: iam_.Role = self.create_default_role(function_name)
+            custom_role: iam_.Role = self.create_default_role(f"{self.id}-{function_name}")
 
         return lambda_.Function(
             self, f"{self.id}-{function_name}",
             code=lambda_.Code.from_asset(
-                lambda_dir,
+                LAMBDA_DIR,
                 exclude=[
                     "*.test.py",
                     "requirements.txt",
@@ -103,7 +109,7 @@ class SlackAppConstructsStack(Stack):
             handler=f"{function_name}.lambda_handler",
             log_retention=RetentionDays.ONE_DAY,
             role=custom_role,
-            runtime=lambda_.Runtime.PYTHON_3_8,
+            runtime=lambda_.Runtime.PYTHON_3_9,
             timeout=Duration.seconds(900),
             tracing=lambda_.Tracing.DISABLED,
         )

@@ -1,12 +1,20 @@
 {
   "name": "K-CDK",
-  "command": "/testcdk",
-  "ssmparametertokenkey": "/apps/slack_app/k_cdk/token",
+  "slack_command": "/testcdk",
+  "ssm_parameter_key_client_id": "/apps/slack_app/k_cdk_slack_command_app/client_id",
+  "ssm_parameter_key_client_secret": "/apps/slack_app/k_cdk_slack_command_app/client_secret",
+  "ssm_parameter_key_verification_token": "/apps/slack_app/k_cdk_slack_command_app/verification_token",
   "access": {
     "TODO_workspace_domain": {
-      "team_id": "TODO_team_id",
+      "team_id": "TODO-TEAM-ID-1",
       "channels": {
-        "TODO_channel_id": "test-suite"
+        "TODO-CHANNEL-ID-1": "TODO-CHANNEL-NAME-1"
+      }
+    },
+    "TODO-WORKSPACE-2": {
+      "team_id": "TODO-TEAM-ID-2",
+      "channels": {
+        "TODO-CHANNEL-ID-1": "TODO-CHANNEL-NAME-2"
       }
     }
   }
