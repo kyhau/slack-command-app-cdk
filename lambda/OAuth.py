@@ -37,8 +37,12 @@ http = urllib3.PoolManager()
 def retrieve_client_credentials():
     try:
         ssm_client = boto3.client("ssm", region_name=TARGET_REGION)
-        v1 = ssm_client.get_parameter(Name=SLACK_APP_CLIENT_ID_PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
-        v2 = ssm_client.get_parameter(Name=SLACK_APP_CLIENT_SECRET_PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
+        v1 = ssm_client.get_parameter(Name=SLACK_APP_CLIENT_ID_PARAMETER_KEY, WithDecryption=True)[
+            "Parameter"
+        ]["Value"]
+        v2 = ssm_client.get_parameter(
+            Name=SLACK_APP_CLIENT_SECRET_PARAMETER_KEY, WithDecryption=True
+        )["Parameter"]["Value"]
         return v1, v2
     except Exception as e:
         if IS_AWS_SAM_LOCAL is False:
@@ -61,7 +65,11 @@ def authorize(response_data):
         team_id = response_data["team"]["id"]
         channel_id = response_data["incoming_webhook"]["channel_id"]
 
-        if app_id == SLACK_APP_ID and team_id in SLACK_TEAM_IDS and channel_id in SLACK_CHANNEL_IDS:
+        if (
+            app_id == SLACK_APP_ID
+            and team_id in SLACK_TEAM_IDS
+            and channel_id in SLACK_CHANNEL_IDS
+        ):
             return True
 
     except Exception as e:
@@ -80,10 +88,7 @@ def put_data_to_dynamodb(response_data):
             elif k not in ["ok"]:
                 data[k] = v
 
-        oauth_table.put_item(
-            TableName=OAUTH_DDB_TABLE_NAME,
-            Item=data
-        )
+        oauth_table.put_item(TableName=OAUTH_DDB_TABLE_NAME, Item=data)
     except Exception as e:
         logging.error(e)
 
@@ -105,7 +110,9 @@ def lambda_handler(event, context):
         }
         encoded_args = urlencode(data)
         url = f"{SLACK_API_OAUTH_V2_URL}?{encoded_args}"
-        resp = http.request("POST", url, headers={"Content-Type": "application/x-www-form-urlencoded"})
+        resp = http.request(
+            "POST", url, headers={"Content-Type": "application/x-www-form-urlencoded"}
+        )
 
         status = resp.status
         resp_data = json.loads(resp.data.decode("utf-8"))

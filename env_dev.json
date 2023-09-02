@@ -1,4 +1,24 @@
 {
   "account": "123456789012",
-  "region": "ap-southeast-2"
+  "region": "ap-southeast-2",
+  "name": "K-CDK",
+  "slack_app_id": "TODO-SLACK-APP-ID",
+  "slack_command": "/testcdk",
+  "ssm_parameter_key_client_id": "/apps/slack_app/k_cdk_slack_command_app/client_id",
+  "ssm_parameter_key_client_secret": "/apps/slack_app/k_cdk_slack_command_app/client_secret",
+  "ssm_parameter_key_verification_token": "/apps/slack_app/k_cdk_slack_command_app/verification_token",
+  "access": {
+    "TODO_workspace_domain": {
+      "team_id": "TODO-TEAM-ID-1",
+      "channels": {
+        "TODO-CHANNEL-ID-1": "TODO-CHANNEL-NAME-1"
+      }
+    },
+    "TODO-WORKSPACE-2": {
+      "team_id": "TODO-TEAM-ID-2",
+      "channels": {
+        "TODO-CHANNEL-ID-1": "TODO-CHANNEL-NAME-2"
+      }
+    }
+  }
 }

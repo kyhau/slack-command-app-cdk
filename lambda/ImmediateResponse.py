@@ -51,7 +51,8 @@ def authenticate(token):
 
     try:
         expected_token = ssm_client.get_parameter(
-            Name=SLACK_VERIFICATION_TOKEN_SSM_PARAMETER_KEY, WithDecryption=True)["Parameter"]["Value"]
+            Name=SLACK_VERIFICATION_TOKEN_SSM_PARAMETER_KEY, WithDecryption=True
+        )["Parameter"]["Value"]
     except Exception as e:
         logging.error(f"Unable to retrieve data from parameter store: {e}")
         return False
@@ -85,7 +86,7 @@ def invoke_lambda(function_namme, payload_json, is_async):
     return lambda_client.invoke(
         FunctionName=function_namme,
         InvocationType="Event" if is_async else "RequestResponse",
-        Payload=payload_bytes_arr
+        Payload=payload_bytes_arr,
     )
 
 
@@ -101,7 +102,9 @@ def lambda_handler(event, context):
     user_id = params["user_id"][0]
 
     if authenticate(params["token"][0]) is False:
-        return respond(f"Sorry <@{user_id}>, an authentication error occurred. Please contact your admin.")
+        return respond(
+            f"Sorry <@{user_id}>, an authentication error occurred. Please contact your admin."
+        )
 
     result = authorize(app_id, channel_id, team_id, team_domain)
     if result is not None:
@@ -127,18 +130,24 @@ def lambda_handler(event, context):
         resp = invoke_lambda(function_name, payload, is_async)
         if resp["ResponseMetadata"]["HTTPStatusCode"] in [200, 201, 202]:
             if is_async:
-                message = f"Processing request from <@{user_id}> on {channel}: {command} {command_text}"
+                message = (
+                    f"Processing request from <@{user_id}> on {channel}: {command} {command_text}"
+                )
             else:
                 try:
                     payload = json.loads(resp["Payload"].read().decode("utf-8"))["body"]
                     message = f"<@{user_id}>: {command} {command_text}\n{payload}"
                 except Exception as e:
-                    logging.error(f"Failed to retrieve response from sync lambda {function_name}: {e}")
+                    logging.error(
+                        f"Failed to retrieve response from sync lambda {function_name}: {e}"
+                    )
 
         if message is None:
             logging.error(resp)
-            message = f"<@{user_id}>, your request on {channel} `{command} {command_text}` cannot be" \
-                      + " processed at the moment. Please try again later."
+            message = (
+                f"<@{user_id}>, your request on {channel} `{command} {command_text}` cannot be"
+                + " processed at the moment. Please try again later."
+            )
 
     if message is None:
         message = f"<@{user_id}>, this app does not support `{command} {command_text}`."

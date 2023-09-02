@@ -36,9 +36,7 @@ def mock_input_data(custom_data={}):
 
 
 def mock_event():
-    return {
-        "body": mock_input_data()
-    }
+    return {"body": mock_input_data()}
 
 
 MOCK_LAMBDA_INVOKE_RESPONSE = {
@@ -57,68 +55,104 @@ def mock_response(message):
 
 
 class TestFunction(unittest.TestCase):
-
     def test_lambda_handler_async_all_good(self):
-        with patch("ImmediateResponse.ssm_client.get_parameter", return_value={"Parameter": {"Value": "dummy-token"}}), \
-             patch("ImmediateResponse.parse_qs") as mock_parse_qs, \
-             patch("ImmediateResponse.lambda_client.invoke") as mock_lambda_invoke:
-
+        with patch(
+            "ImmediateResponse.ssm_client.get_parameter",
+            return_value={"Parameter": {"Value": "dummy-token"}},
+        ), patch("ImmediateResponse.parse_qs") as mock_parse_qs, patch(
+            "ImmediateResponse.lambda_client.invoke"
+        ) as mock_lambda_invoke:
             mock_parse_qs.return_value = mock_input_data(custom_data={"text": ["async"]})
             mock_lambda_invoke.return_value = MOCK_LAMBDA_INVOKE_RESPONSE
 
             ret = func.lambda_handler(mock_event(), None)
 
-            self.assertDictEqual(ret, mock_response("Processing request from <@dummy-user-id-a> on dummy-channel-a: /slack-unittest async"))
+            self.assertDictEqual(
+                ret,
+                mock_response(
+                    "Processing request from <@dummy-user-id-a> on dummy-channel-a: /slack-unittest async"
+                ),
+            )
 
     def test_lambda_handler_failed_no_token(self):
-        with patch("ImmediateResponse.ssm_client.get_parameter", return_value={"Parameter": {"Value": "dummy-token"}}), \
-             patch("ImmediateResponse.parse_qs") as mock_parse_qs:
-
+        with patch(
+            "ImmediateResponse.ssm_client.get_parameter",
+            return_value={"Parameter": {"Value": "dummy-token"}},
+        ), patch("ImmediateResponse.parse_qs") as mock_parse_qs:
             mock_parse_qs.return_value = mock_input_data({"token": [None]})
 
             ret = func.lambda_handler(mock_event(), None)
 
-            self.assertDictEqual(ret, mock_response("Sorry <@dummy-user-id-a>, an authentication error occurred. Please contact your admin."))
+            self.assertDictEqual(
+                ret,
+                mock_response(
+                    "Sorry <@dummy-user-id-a>, an authentication error occurred. Please contact your admin."
+                ),
+            )
 
     def test_lambda_handler_failed_invalid_team_domain(self):
-        with patch("ImmediateResponse.ssm_client.get_parameter", return_value={"Parameter": {"Value": "dummy-token"}}), \
-             patch("ImmediateResponse.parse_qs") as mock_parse_qs:
-
+        with patch(
+            "ImmediateResponse.ssm_client.get_parameter",
+            return_value={"Parameter": {"Value": "dummy-token"}},
+        ), patch("ImmediateResponse.parse_qs") as mock_parse_qs:
             mock_parse_qs.return_value = mock_input_data({"team_domain": ["companyc"]})
 
             ret = func.lambda_handler(mock_event(), None)
 
-            self.assertDictEqual(ret, mock_response("Sorry <@dummy-user-id-a>, this app does not support this team domain companyc."))
+            self.assertDictEqual(
+                ret,
+                mock_response(
+                    "Sorry <@dummy-user-id-a>, this app does not support this team domain companyc."
+                ),
+            )
 
     def test_lambda_handler_failed_invalid_team_id(self):
-        with patch("ImmediateResponse.ssm_client.get_parameter", return_value={"Parameter": {"Value": "dummy-token"}}), \
-             patch("ImmediateResponse.parse_qs") as mock_parse_qs:
-
+        with patch(
+            "ImmediateResponse.ssm_client.get_parameter",
+            return_value={"Parameter": {"Value": "dummy-token"}},
+        ), patch("ImmediateResponse.parse_qs") as mock_parse_qs:
             mock_parse_qs.return_value = mock_input_data({"team_id": ["TA3333333"]})
 
             ret = func.lambda_handler(mock_event(), None)
 
-            self.assertDictEqual(ret, mock_response("Sorry <@dummy-user-id-a>, this app does not support this team ID TA3333333."))
+            self.assertDictEqual(
+                ret,
+                mock_response(
+                    "Sorry <@dummy-user-id-a>, this app does not support this team ID TA3333333."
+                ),
+            )
 
     def test_lambda_handler_failed_invalid_channel_id(self):
-        with patch("ImmediateResponse.ssm_client.get_parameter", return_value={"Parameter": {"Value": "dummy-token"}}), \
-             patch("ImmediateResponse.parse_qs") as mock_parse_qs:
-
+        with patch(
+            "ImmediateResponse.ssm_client.get_parameter",
+            return_value={"Parameter": {"Value": "dummy-token"}},
+        ), patch("ImmediateResponse.parse_qs") as mock_parse_qs:
             mock_parse_qs.return_value = mock_input_data({"channel_id": ["CCCCCCCCCCC"]})
 
             ret = func.lambda_handler(mock_event(), None)
 
-            self.assertDictEqual(ret, mock_response("Sorry <@dummy-user-id-a>, this app does not support this channel ID CCCCCCCCCCC."))
+            self.assertDictEqual(
+                ret,
+                mock_response(
+                    "Sorry <@dummy-user-id-a>, this app does not support this channel ID CCCCCCCCCCC."
+                ),
+            )
 
     def test_lambda_handler_failed_invalid_command(self):
-        with patch("ImmediateResponse.ssm_client.get_parameter", return_value={"Parameter": {"Value": "dummy-token"}}), \
-             patch("ImmediateResponse.parse_qs") as mock_parse_qs:
-
+        with patch(
+            "ImmediateResponse.ssm_client.get_parameter",
+            return_value={"Parameter": {"Value": "dummy-token"}},
+        ), patch("ImmediateResponse.parse_qs") as mock_parse_qs:
             mock_parse_qs.return_value = mock_input_data({"command": ["/dummy-invalid-command"]})
 
             ret = func.lambda_handler(mock_event(), None)
 
-            self.assertDictEqual(ret, mock_response("<@dummy-user-id-a>, this app does not support `/dummy-invalid-command help`."))
+            self.assertDictEqual(
+                ret,
+                mock_response(
+                    "<@dummy-user-id-a>, this app does not support `/dummy-invalid-command help`."
+                ),
+            )
 
 
 if __name__ == "__main__":

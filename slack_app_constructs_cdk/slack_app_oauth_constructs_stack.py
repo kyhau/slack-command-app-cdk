@@ -28,7 +28,8 @@ class SlackAppOAuthConstructsStack(Stack):
 
         # cdk deploy --parameters StageName=v1
         stage = CfnParameter(
-            self, "StageName",
+            self,
+            "StageName",
             default="v1",
             description="The name of the API Gateway Stage.",
             type="String",
@@ -58,9 +59,12 @@ class SlackAppOAuthConstructsStack(Stack):
         func_oauth.add_environment("OAuthDynamoDBTable", table_name)
 
         api = apigw_.LambdaRestApi(
-            self, f"{id}-API",
+            self,
+            f"{id}-API",
             description=f"{id} API",
-            endpoint_configuration=apigw_.EndpointConfiguration(types=[apigw_.EndpointType.REGIONAL]),
+            endpoint_configuration=apigw_.EndpointConfiguration(
+                types=[apigw_.EndpointType.REGIONAL]
+            ),
             handler=func_oauth,
             deploy=False,
             proxy=False,
@@ -71,7 +75,8 @@ class SlackAppOAuthConstructsStack(Stack):
 
         # Create APIGW Loggroup for setting retention
         LogGroup(
-            self, f"{id}-API-LogGroup",
+            self,
+            f"{id}-API-LogGroup",
             log_group_name=f"API-Gateway-Execution-Logs_{api.rest_api_id}/{stage}",
             retention=RetentionDays.ONE_DAY,
         )
@@ -79,7 +84,8 @@ class SlackAppOAuthConstructsStack(Stack):
         # Do a new deployment on specific stage
         new_deployment = apigw_.Deployment(self, f"{id}-API-Deployment", api=api)
         apigw_.Stage(
-            self, f"{id}-API-Stage",
+            self,
+            f"{id}-API-Stage",
             data_trace_enabled=True,
             description=f"{stage} environment",
             deployment=new_deployment,
@@ -91,7 +97,8 @@ class SlackAppOAuthConstructsStack(Stack):
 
     def create_dynamodb_table(self, table_name: str) -> ddb_.Table:
         return ddb_.Table(
-            self, table_name,
+            self,
+            table_name,
             billing_mode=ddb_.BillingMode.PAY_PER_REQUEST,
             partition_key=ddb_.Attribute(name="access_token", type=ddb_.AttributeType.STRING),
             removal_policy=RemovalPolicy.RETAIN,
@@ -100,7 +107,8 @@ class SlackAppOAuthConstructsStack(Stack):
 
     def create_lambda(self, function_name: str, custom_role: iam_.Role) -> lambda_.Function:
         return lambda_.Function(
-            self, f"{self.id}-{function_name}",
+            self,
+            f"{self.id}-{function_name}-Function",
             code=lambda_.Code.from_asset(
                 LAMBDA_DIR,
                 exclude=[
@@ -116,15 +124,18 @@ class SlackAppOAuthConstructsStack(Stack):
             handler=f"{function_name}.lambda_handler",
             log_retention=RetentionDays.ONE_DAY,
             role=custom_role,
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_11,
             timeout=Duration.seconds(900),
             tracing=lambda_.Tracing.DISABLED,
         )
 
-    def create_func_oauth_execution_role(self, function_name: str, client_id_key: str, client_secret_key: str, table_arn: str) -> iam_.Role:
+    def create_func_oauth_execution_role(
+        self, function_name: str, client_id_key: str, client_secret_key: str, table_arn: str
+    ) -> iam_.Role:
         role_name = f"{function_name}-ExecutionRole"
         return iam_.Role(
-            self, role_name,
+            self,
+            role_name,
             assumed_by=iam_.ServicePrincipal("lambda.amazonaws.com"),
             inline_policies={
                 f"{function_name}-ExecutionPolicy": iam_.PolicyDocument(
@@ -134,9 +145,7 @@ class SlackAppOAuthConstructsStack(Stack):
                                 "dynamodb:PutItem",
                             ],
                             effect=iam_.Effect.ALLOW,
-                            resources=[
-                                table_arn
-                            ],
+                            resources=[table_arn],
                         ),
                         iam_.PolicyStatement(
                             actions=[
@@ -152,7 +161,9 @@ class SlackAppOAuthConstructsStack(Stack):
                 )
             },
             managed_policies=[
-                iam_.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
+                iam_.ManagedPolicy.from_aws_managed_policy_name(
+                    "service-role/AWSLambdaBasicExecutionRole"
+                ),
                 # iam_.ManagedPolicy.from_aws_managed_policy_name("AWSXrayWriteOnlyAccess"),
             ],
             role_name=role_name,
