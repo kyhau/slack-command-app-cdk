@@ -1,12 +1,14 @@
 # slack-command-app-cdk
 
-[![githubactions](https://github.com/kyhau/slack-command-app-cdk/workflows/build-slackapp/badge.svg)](https://github.com/kyhau/slack-command-app-cdk/actions)
+[![githubactions](https://github.com/kyhau/slack-command-app-cdk/workflows/slackapp-build/badge.svg)](https://github.com/kyhau/slack-chat-app-cdk/actions/workflows/slackapp-build.yaml)
 
 This repo creates a [Slack Commands](https://api.slack.com/interactivity/slash-commands) App/bot that responds to a command (i.e. `/find`) and sends the response to the same channel.
 
 If you want to use [Slack Chat](https://api.slack.com/interactivity/slash-commands) that responds to messages when the app is mentioned (i.e. `@<app-name>`) and sends the response to the corresponding thread, see another repo [kyhau/slack-chat-app-cdk](https://github.com/kyhau/slack-chat-app-cdk).
 
 This SlackApp can handle requests triggered from a Slash Command which will take longer than [3 seconds](https://api.slack.com/events-api) to process, and posts the details back to the user.
+
+All notable changes to this project will be documented in [CHANGELOG](./CHANGELOG.md).
 
 ---
 

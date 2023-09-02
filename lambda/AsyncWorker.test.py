@@ -24,7 +24,7 @@ class TestFunction(unittest.TestCase):
             ret = func.lambda_handler(mock_event(text_value="async"), None)
             mock_post.assert_called_once_with(
                 "test_url",
-                "<@test_user_id> invoked `/slack-unittest` in test_channel with the following text: `async`"
+                "<@test_user_id> invoked `/slack-unittest` in test_channel with the following text: `async`",
             )
             self.assertEqual(ret, {"statusCode": 200})
 

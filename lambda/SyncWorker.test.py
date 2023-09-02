@@ -24,8 +24,8 @@ class TestFunction(unittest.TestCase):
             ret,
             {
                 "body": "Processed <@test_user_id> `/slack-unittest sync` by SyncWorker.",
-                "statusCode": 200
-            }
+                "statusCode": 200,
+            },
         )
 
 

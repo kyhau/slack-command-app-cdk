@@ -31,7 +31,8 @@ class SlackAppConstructsStack(Stack):
 
         # cdk deploy --parameters StageName=v1
         stage = CfnParameter(
-            self, "StageName",
+            self,
+            "StageName",
             default="v1",
             description="The name of the API Gateway Stage.",
             type="String",
@@ -50,18 +51,29 @@ class SlackAppConstructsStack(Stack):
             f"{id}-ImmediateResponse",
             ssm_param_key_verification_token,
         )
-        func_immediate_response = self.create_lambda("ImmediateResponse", custom_role=func_immediate_response_role)
+        func_immediate_response = self.create_lambda(
+            "ImmediateResponse", custom_role=func_immediate_response_role
+        )
         func_immediate_response.add_environment("SlackAppId", settings["slack_app_id"])
-        func_immediate_response.add_environment("SlackChannelIds", ",".join(get_channel_ids(settings)))
-        func_immediate_response.add_environment("SlackCommand", settings["command"])
-        func_immediate_response.add_environment("SlackDomains", ",".join(get_team_domains(settings)))
+        func_immediate_response.add_environment(
+            "SlackChannelIds", ",".join(get_channel_ids(settings))
+        )
+        func_immediate_response.add_environment("SlackCommand", settings["slack_command"])
+        func_immediate_response.add_environment(
+            "SlackDomains", ",".join(get_team_domains(settings))
+        )
         func_immediate_response.add_environment("SlackTeamIds", ",".join(get_team_ids(settings)))
-        func_immediate_response.add_environment("SlackVerificationTokenParameterKey", ssm_param_key_verification_token)
-        func_immediate_response.add_environment("AsyncWorkerLambdaFunctionName", f"{id}-AsyncWorker")
+        func_immediate_response.add_environment(
+            "SlackVerificationTokenParameterKey", ssm_param_key_verification_token
+        )
+        func_immediate_response.add_environment(
+            "AsyncWorkerLambdaFunctionName", f"{id}-AsyncWorker"
+        )
         func_immediate_response.add_environment("SyncWorkerLambdaFunctionName", f"{id}-SyncWorker")
 
         api = apigw_.LambdaRestApi(
-            self, f"{id}-API",
+            self,
+            f"{id}-API",
             description=f"{id} API",
             endpoint_configuration=apigw_.EndpointConfiguration(types=[apigw_.EndpointType.EDGE]),
             handler=func_immediate_response,
@@ -70,7 +82,8 @@ class SlackAppConstructsStack(Stack):
 
         # Create APIGW Loggroup for setting retention
         LogGroup(
-            self, f"{id}-API-LogGroup",
+            self,
+            f"{id}-API-LogGroup",
             log_group_name=f"API-Gateway-Execution-Logs_{api.rest_api_id}/{stage}",
             retention=RetentionDays.ONE_DAY,
         )
@@ -78,7 +91,8 @@ class SlackAppConstructsStack(Stack):
         # Do a new deployment on specific stage
         new_deployment = apigw_.Deployment(self, f"{id}-API-Deployment", api=api)
         apigw_.Stage(
-            self, f"{id}-API-Stage",
+            self,
+            f"{id}-API-Stage",
             data_trace_enabled=False,
             description=f"{stage} environment",
             deployment=new_deployment,
@@ -93,7 +107,8 @@ class SlackAppConstructsStack(Stack):
             custom_role: iam_.Role = self.create_default_role(f"{self.id}-{function_name}")
 
         return lambda_.Function(
-            self, f"{self.id}-{function_name}",
+            self,
+            f"{self.id}-{function_name}",
             code=lambda_.Code.from_asset(
                 LAMBDA_DIR,
                 exclude=[
@@ -109,15 +124,18 @@ class SlackAppConstructsStack(Stack):
             handler=f"{function_name}.lambda_handler",
             log_retention=RetentionDays.ONE_DAY,
             role=custom_role,
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_11,
             timeout=Duration.seconds(900),
             tracing=lambda_.Tracing.DISABLED,
         )
 
-    def create_immediate_response_execution_role(self, function_name: str, parameter_key: str) -> iam_.Role:
+    def create_immediate_response_execution_role(
+        self, function_name: str, parameter_key: str
+    ) -> iam_.Role:
         role_name = f"{function_name}-ExecutionRole"
         return iam_.Role(
-            self, role_name,
+            self,
+            role_name,
             assumed_by=iam_.ServicePrincipal("lambda.amazonaws.com"),
             inline_policies={
                 f"{function_name}-ExecutionPolicy": iam_.PolicyDocument(
@@ -146,7 +164,9 @@ class SlackAppConstructsStack(Stack):
                 )
             },
             managed_policies=[
-                iam_.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
+                iam_.ManagedPolicy.from_aws_managed_policy_name(
+                    "service-role/AWSLambdaBasicExecutionRole"
+                ),
                 # iam_.ManagedPolicy.from_aws_managed_policy_name("AWSXrayWriteOnlyAccess"),
             ],
             role_name=role_name,
@@ -155,10 +175,13 @@ class SlackAppConstructsStack(Stack):
     def create_default_role(self, function_name: str) -> iam_.Role:
         role_name = f"{function_name}-ExecutionRole"
         return iam_.Role(
-            self, role_name,
+            self,
+            role_name,
             assumed_by=iam_.ServicePrincipal("lambda.amazonaws.com"),
             managed_policies=[
-                iam_.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
+                iam_.ManagedPolicy.from_aws_managed_policy_name(
+                    "service-role/AWSLambdaBasicExecutionRole"
+                ),
                 # iam_.ManagedPolicy.from_aws_managed_policy_name("AWSXrayWriteOnlyAccess"),
             ],
             role_name=role_name,
