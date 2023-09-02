@@ -1,4 +1,4 @@
-name: slackapp-build
+name: SlackApp-build
 
 on: [push]
 
