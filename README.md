@@ -1,6 +1,8 @@
 # slack-command-app-cdk
 
-[![githubactions](https://github.com/kyhau/slack-command-app-cdk/workflows/slackapp-build/badge.svg)](https://github.com/kyhau/slack-chat-app-cdk/actions/workflows/slackapp-build.yaml)
+[![githubactions](https://github.com/kyhau/slack-command-app-cdk/actions/workflows/slackapp-build.yaml/badge.svg)](https://github.com/kyhau/slack-command-app-cdk/actions/workflows/slackapp-build.yaml)
+[![CodeQL](https://github.com/kyhau/slack-command-app-cdk/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kyhau/slack-command-app-cdk/actions/workflows/codeql-analysis.yml)
+[![SecretsScan](https://github.com/kyhau/slack-command-app-cdk/actions/workflows/secrets-scan.yml/badge.svg)](https://github.com/kyhau/slack-command-app-cdk/actions/workflows/secrets-scan.yml)
 
 This repo creates a [Slack Commands](https://api.slack.com/interactivity/slash-commands) App/bot that responds to a command (i.e. `/find`) and sends the response to the same channel.
 
