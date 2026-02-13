@@ -124,7 +124,7 @@ class SlackAppOAuthConstructsStack(Stack):
             handler=f"{function_name}.lambda_handler",
             log_retention=RetentionDays.ONE_DAY,
             role=custom_role,
-            runtime=lambda_.Runtime.PYTHON_3_11,
+            runtime=lambda_.Runtime.PYTHON_3_14,
             timeout=Duration.seconds(900),
             tracing=lambda_.Tracing.DISABLED,
         )
