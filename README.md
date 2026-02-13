@@ -69,7 +69,7 @@ To create a **Slack Command** in Slack (the default command in this repo is **`/
 
 Prerequisites
 1. Install CDK v2: `npm install -g aws-cdk@next`
-2. Install Python 3.8 or above.
+2. Install Python 3.13 or above.
 3. Update [env_dev.json](env_dev.json) with you AWS account number and region that the Slack App is being deployed to.
 4. Update [settings_dev.json](settings_dev.json) to include the Slack domains, team IDs and channel IDs that the Slack App serves.
 
