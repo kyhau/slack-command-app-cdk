@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.0 - 2026-02-13
+
+### Changed
+
+* Updated Lambda Runtime from 3.11 to 3.14.
+* Updated Python requirement from 3.8+ to 3.13+.
+
+
 ## 0.2.1 - 2023-09-02
 
 ### Changed
