@@ -13,8 +13,8 @@ setuptools.setup(
     package_dir={"": "slack_app_constructs_cdk"},
     packages=setuptools.find_packages(where="slack_app_constructs_cdk"),
     install_requires=[
-        "aws-cdk-lib==2.262.1",
-        "constructs==10.7.1",
+        "aws-cdk-lib==2.262.2",
+        "constructs==10.8.0",
     ],
     python_requires=">=3.13",
     classifiers=[
